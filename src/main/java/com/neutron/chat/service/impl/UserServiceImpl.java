@@ -7,6 +7,7 @@ import com.neutron.chat.common.ErrorCode;
 import com.neutron.chat.exception.BusinessException;
 import com.neutron.chat.model.dto.UserDTO;
 import com.neutron.chat.model.entity.User;
+import com.neutron.chat.model.request.JoinGroupRequest;
 import com.neutron.chat.model.request.UserLoginRequest;
 import com.neutron.chat.model.request.UserRegisterRequest;
 import com.neutron.chat.service.UserService;

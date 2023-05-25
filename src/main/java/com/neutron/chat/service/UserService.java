@@ -3,6 +3,7 @@ package com.neutron.chat.service;
 import com.neutron.chat.model.dto.UserDTO;
 import com.neutron.chat.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.neutron.chat.model.request.JoinGroupRequest;
 import com.neutron.chat.model.request.UserLoginRequest;
 import com.neutron.chat.model.request.UserRegisterRequest;
 
