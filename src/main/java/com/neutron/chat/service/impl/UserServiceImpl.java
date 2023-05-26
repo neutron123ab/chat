@@ -2,6 +2,7 @@ package com.neutron.chat.service.impl;
 import java.util.Date;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neutron.chat.common.ErrorCode;
 import com.neutron.chat.exception.BusinessException;
@@ -30,6 +31,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         String username = userLoginRequest.getUsername();
         String password = userLoginRequest.getPassword();
+        password = SecureUtil.md5(password + "user");
         User user = query().eq("username", username).eq("password", password).one();
         if (user == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名或密码错误");
@@ -49,7 +51,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         User user = new User();
         user.setUsername(userRegisterRequest.getUsername());
-        user.setPassword(password);
+        String encryptPassword = SecureUtil.md5(password + "user");
+        user.setPassword(encryptPassword);
         boolean save = save(user);
         if (!save) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "向数据库插入用户失败");

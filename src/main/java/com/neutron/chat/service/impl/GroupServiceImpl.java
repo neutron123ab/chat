@@ -1,4 +1,5 @@
 package com.neutron.chat.service.impl;
+
 import java.util.Date;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,13 +19,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
-* @author zzs
-* @description 针对表【group(群组表)】的数据库操作Service实现
-* @createDate 2023-05-23 21:14:45
-*/
+ * @author zzs
+ * @description 针对表【group(群组表)】的数据库操作Service实现
+ * @createDate 2023-05-23 21:14:45
+ */
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
-    implements GroupService{
+        implements GroupService {
 
     @Resource
     private UserGroupService userGroupService;
@@ -45,6 +46,15 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
                 .collect(Collectors.toList());
         //查询出所有群聊信息
         return query().eq("id", groupIdList).list();
+    }
+
+    @Override
+    public List<Long> getGroupId(Long userId) {
+        return userGroupService.query()
+                .eq("user_id", userId)
+                .list()
+                .stream().map(UserGroup::getGroupId)
+                .collect(Collectors.toList());
     }
 
     @Override

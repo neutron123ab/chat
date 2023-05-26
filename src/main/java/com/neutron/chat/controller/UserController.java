@@ -4,15 +4,14 @@ import cn.hutool.core.bean.BeanUtil;
 import com.neutron.chat.common.BaseResponse;
 import com.neutron.chat.common.ErrorCode;
 import com.neutron.chat.common.ResultUtils;
+import com.neutron.chat.common.UserStore;
 import com.neutron.chat.exception.BusinessException;
 import com.neutron.chat.model.dto.UserDTO;
 import com.neutron.chat.model.request.UserLoginRequest;
 import com.neutron.chat.model.request.UserRegisterRequest;
 import com.neutron.chat.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author zzs
  * @date 2023/5/23 21:36
  */
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -44,6 +44,9 @@ public class UserController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
         }
         request.getSession().setAttribute("user_login_state", userDTO);
+        //将登录信息保存到本地线程
+        UserStore.setUserThreadLocal(userDTO);
+        log.info("threadLocal中存储的信息为：{}", UserStore.getUserThreadLocal());
         return ResultUtils.success(userDTO, "登录成功");
     }
 
@@ -61,6 +64,19 @@ public class UserController {
         Boolean register = userService.userRegister(userRegisterRequest);
 
         return ResultUtils.success(register, "注册成功");
+    }
+
+    /**
+     * 退出登录接口
+     *
+     * @param request 请求
+     * @return 是否退出登录成功
+     */
+    @DeleteMapping("/logout")
+    public BaseResponse<Boolean> logout(HttpServletRequest request) {
+        request.getSession().removeAttribute("user_login_state");
+        UserStore.clear();
+        return ResultUtils.success(true, "用户退出登录成功");
     }
 
 }

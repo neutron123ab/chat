@@ -22,6 +22,13 @@ public interface GroupService extends IService<Group> {
     List<Group> getGroupsUserJoin(HttpServletRequest request);
 
     /**
+     * 查询用户加入的所有群聊的id
+     * @param userId 用户id
+     * @return id集合
+     */
+    List<Long> getGroupId(Long userId);
+
+    /**
      * 创建群聊
      *
      * @param userId 群主id
