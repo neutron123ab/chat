@@ -1,14 +1,12 @@
 package com.neutron.chat.chatServer;
 
 import com.google.gson.Gson;
-import com.neutron.chat.common.UserStore;
-import com.neutron.chat.model.dto.UserDTO;
 import com.neutron.chat.model.entity.ChatMessage;
 import com.neutron.chat.service.GroupService;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.util.AttributeKey;
@@ -21,8 +19,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.neutron.chat.constants.ChatConstants.GROUP_TYPE;
-import static com.neutron.chat.constants.ChatConstants.SINGLE_TYPE;
+import static com.neutron.chat.constants.ChatConstants.*;
 
 /**
  * @author zzs
@@ -53,24 +50,10 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        UserDTO userThreadLocal = UserStore.getUserThreadLocal();
-        Long userId = userThreadLocal.getId();
-        if (userId == null) {
-            return;
-        }
         log.info("客户端 {} 与服务器建立连接", ctx.channel().id());
         channelGroup.add(ctx.channel());
 
-        log.info("chatHandler接收到的userId：{}", userId);
-        //将用户id与对应的channel关联起来
-        userChannelMap.put(userId, ctx.channel().id());
-        List<Long> groupId = groupService.getGroupId(userId);
-        //将用户id加入到所有groupId关联的channelGroup中
-        for (Long id : groupId) {
-            //根据id获取channelGroup，如果没有就新建一个channelGroup
-            ChannelGroup group = groupChannelMap.computeIfAbsent(id, key -> new DefaultChannelGroup(GlobalEventExecutor.INSTANCE));
-            group.add(ctx.channel());
-        }
+        super.channelActive(ctx);
     }
 
     @Override
@@ -88,20 +71,38 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
         String messageType = chatMessage.getMessageType();
         //客户端消息接受处理与转发
         Long receiverId = chatMessage.getReceiverId();
-        if (messageType.equals(SINGLE_TYPE)) {
-            //消息类型为私聊
-            //获取目标channelId
-            ChannelId targetChannelId = userChannelMap.get(receiverId);
-            if (targetChannelId == null) {
-                log.info("目标未上线");
-            }
-            Channel targetChannel = channelGroup.find(targetChannelId);
-            //向目标用户发送消息
-            targetChannel.writeAndFlush(new TextWebSocketFrame(msg.text()));
-        } else if (messageType.equals(GROUP_TYPE)) {
-            //消息类型是群聊
-            //获取目标群聊的channelGroup，并向其发送消息
-            groupChannelMap.get(receiverId).writeAndFlush(new TextWebSocketFrame(msg.text()));
+        switch (messageType) {
+            case CONNECT_TYPE:
+                //首次连接获取客户端的userId
+                Long userId = chatMessage.getSenderId();
+                log.info("chatHandler接收到的userId：{}", userId);
+                //将用户id与对应的channel关联起来
+                userChannelMap.put(userId, ctx.channel().id());
+                List<Long> groupId = groupService.getGroupId(userId);
+                //将用户id加入到所有groupId关联的channelGroup中
+                for (Long id : groupId) {
+                    //根据id获取channelGroup，如果没有就新建一个channelGroup
+                    ChannelGroup group = groupChannelMap.computeIfAbsent(id, key -> new DefaultChannelGroup(GlobalEventExecutor.INSTANCE));
+                    group.add(ctx.channel());
+                }
+                break;
+            case SINGLE_TYPE:
+                //消息类型为私聊
+                //获取目标channelId
+                ChannelId targetChannelId = userChannelMap.get(receiverId);
+                if (targetChannelId == null) {
+                    log.info("目标未上线");
+                }
+                Channel targetChannel = channelGroup.find(targetChannelId);
+                //向目标用户发送消息
+                targetChannel.writeAndFlush(new TextWebSocketFrame(msg.text()));
+                break;
+            case GROUP_TYPE:
+                //消息类型是群聊
+                //获取目标群聊的channelGroup，并向其发送消息
+                groupChannelMap.get(receiverId).writeAndFlush(new TextWebSocketFrame(msg.text()));
+                break;
+            default: break;
         }
     }
 }

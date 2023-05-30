@@ -27,9 +27,6 @@ public class WebSocketServer {
     @Resource
     private ChatHandler chatHandler;
 
-    @Resource
-    private UriHandler uriHandler;
-
     public void run(int port) throws InterruptedException {
         NioEventLoopGroup bossGroup = new NioEventLoopGroup();
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -46,9 +43,9 @@ public class WebSocketServer {
                             pipeline.addLast(new HttpServerCodec());
                             pipeline.addLast(new ChunkedWriteHandler());
                             pipeline.addLast(new HttpObjectAggregator(8192));
-                            pipeline.addLast(new WebSocketServerProtocolHandler("/chat", null, true, 65536 * 10));
                             //uri参数处理器
                             //pipeline.addLast(uriHandler);
+                            pipeline.addLast(new WebSocketServerProtocolHandler("/chat"));
                             //聊天信息接受与转发处理器
                             pipeline.addLast(chatHandler);
                         }

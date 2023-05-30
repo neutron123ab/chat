@@ -18,4 +18,9 @@ public final class ChatConstants {
      * 消息类型：群聊
      */
     public static final String GROUP_TYPE = "group";
+
+    /**
+     * 消息类型：连接消息
+     */
+    public static final String CONNECT_TYPE = "connect";
 }
