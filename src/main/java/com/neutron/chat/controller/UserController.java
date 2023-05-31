@@ -1,6 +1,7 @@
 package com.neutron.chat.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.neutron.chat.chatServer.ChatHandler;
 import com.neutron.chat.common.BaseResponse;
 import com.neutron.chat.common.ErrorCode;
 import com.neutron.chat.common.ResultUtils;
@@ -10,7 +11,11 @@ import com.neutron.chat.model.entity.User;
 import com.neutron.chat.model.request.UserLoginRequest;
 import com.neutron.chat.model.request.UserRegisterRequest;
 import com.neutron.chat.service.UserService;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelId;
+import io.netty.channel.group.ChannelGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -92,7 +97,20 @@ public class UserController {
         List<UserDTO> userDTOList = userService.query()
                 .ne("id", loginUser.getId())
                 .list().stream()
-                .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
+                .map(user -> {
+                    UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+                    ChannelId channelId = ChatHandler.userChannelMap.get(userDTO.getId());
+                    boolean match = ChatHandler.channelGroup.stream()
+                            .anyMatch(channel -> channel.id().equals(channelId));
+                    if (!match) {
+                        //用户未登录
+                        userDTO.setStatus(0);
+                    }else {
+                        //用户已登录
+                        userDTO.setStatus(1);
+                    }
+                    return userDTO;
+                })
                 .collect(Collectors.toList());
         return ResultUtils.success(userDTOList, "获取用户列表成功");
     }

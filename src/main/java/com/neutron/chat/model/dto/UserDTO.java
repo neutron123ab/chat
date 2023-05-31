@@ -33,4 +33,9 @@ public class UserDTO implements Serializable {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 用户状态（0-离线 1-在线）
+     */
+    private Integer status;
 }

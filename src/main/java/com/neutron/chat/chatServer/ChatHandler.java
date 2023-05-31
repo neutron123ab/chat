@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -56,6 +57,26 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("客户端 {} 与服务器断开连接", ctx.channel().id());
+
+        //当断开连接后，向所有已登录的用户发送断开连接消息
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setMessageType(DISCONNECT_TYPE);
+        chatMessage.setSenderId(0L);
+        chatMessage.setSenderName("");
+        chatMessage.setReceiverId(0L);
+        chatMessage.setReceiverName("");
+        chatMessage.setMessage("");
+        //找到channelId对应的userId
+        for (Map.Entry<Long, ChannelId> entry : userChannelMap.entrySet()) {
+            if (entry.getValue().equals(ctx.channel().id())) {
+                chatMessage.setSenderId(entry.getKey());
+                break;
+            }
+        }
+        Gson gson = new Gson();
+        String json = gson.toJson(chatMessage);
+        channelGroup.writeAndFlush(new TextWebSocketFrame(json));
+
         channelGroup.remove(ctx.channel());
     }
 
@@ -82,6 +103,8 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
                     ChannelGroup group = groupChannelMap.computeIfAbsent(id, key -> new DefaultChannelGroup(GlobalEventExecutor.INSTANCE));
                     group.add(ctx.channel());
                 }
+                //用户建立连接后，向所有已登录用户发送消息
+                channelGroup.writeAndFlush(new TextWebSocketFrame(msg.text()));
                 break;
             case SINGLE_TYPE:
                 //消息类型为私聊

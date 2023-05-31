@@ -23,4 +23,9 @@ public final class ChatConstants {
      * 消息类型：连接消息
      */
     public static final String CONNECT_TYPE = "connect";
+
+    /**
+     * 消息类型：断开连接
+     */
+    public static final String DISCONNECT_TYPE = "disconnect";
 }
