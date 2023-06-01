@@ -93,7 +93,6 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
             case CONNECT_TYPE:
                 //首次连接获取客户端的userId
                 Long userId = chatMessage.getSenderId();
-                log.info("chatHandler接收到的userId：{}", userId);
                 //将用户id与对应的channel关联起来
                 userChannelMap.put(userId, ctx.channel().id());
                 List<Long> groupId = groupService.getGroupId(userId);
