@@ -1,0 +1,22 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+spring:
+  session:
+    timeout: 86400
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 137911
+    url: jdbc:mysql://localhost:3306/chat
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    map-underscore-to-camel-case: true
+
+websocket:
+  port: 8088
