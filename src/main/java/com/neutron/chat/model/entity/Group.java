@@ -8,9 +8,10 @@ import lombok.Data;
 
 /**
  * 群组表
+ * @author zzs
  * @TableName group
  */
-@TableName(value ="group")
+@TableName(value ="t_group")
 @Data
 public class Group implements Serializable {
     /**
@@ -28,6 +29,11 @@ public class Group implements Serializable {
      * 群组名
      */
     private String groupName;
+
+    /**
+     * 群聊头像
+     */
+    private String avatarUrl;
 
     /**
      * 创建时间

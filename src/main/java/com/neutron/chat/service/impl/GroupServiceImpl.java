@@ -1,6 +1,6 @@
 package com.neutron.chat.service.impl;
 
-import java.util.Date;
+import java.util.ArrayList;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neutron.chat.common.ErrorCode;
@@ -11,6 +11,7 @@ import com.neutron.chat.model.entity.UserGroup;
 import com.neutron.chat.service.GroupService;
 import com.neutron.chat.mapper.GroupMapper;
 import com.neutron.chat.service.UserGroupService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
  * @description 针对表【group(群组表)】的数据库操作Service实现
  * @createDate 2023-05-23 21:14:45
  */
+@Slf4j
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
         implements GroupService {
@@ -44,8 +46,11 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
                 .stream()
                 .map(UserGroup::getGroupId)
                 .collect(Collectors.toList());
+        if (groupIdList.isEmpty()) {
+            return new ArrayList<>();
+        }
         //查询出所有群聊信息
-        return query().eq("id", groupIdList).list();
+        return listByIds(groupIdList);
     }
 
     @Override
@@ -68,6 +73,14 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
         boolean save = save(group);
         if (!save) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "创建群聊失败");
+        }
+        //如果创建群聊成功，则将用户id与群聊id关联起来
+        UserGroup userGroup = new UserGroup();
+        userGroup.setUserId(userId);
+        userGroup.setGroupId(group.getId());
+        boolean userGroupSave = userGroupService.save(userGroup);
+        if (!userGroupSave) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户与群聊关联失败");
         }
         return true;
     }

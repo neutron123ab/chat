@@ -1,16 +1,15 @@
 package com.neutron.chat.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.neutron.chat.common.BaseResponse;
 import com.neutron.chat.common.ErrorCode;
 import com.neutron.chat.common.ResultUtils;
 import com.neutron.chat.exception.BusinessException;
 import com.neutron.chat.model.dto.UserDTO;
 import com.neutron.chat.model.entity.Group;
+import com.neutron.chat.model.request.CreateGroupRequest;
 import com.neutron.chat.service.GroupService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -40,20 +39,33 @@ public class GroupController {
 
     /**
      * 创建群聊接口
-     * @param groupName 群聊名称
+     * @param createGroupRequest 创建群聊请求
      * @param request servlet请求
      * @return 是否创建成功
      */
     @PostMapping("/create")
-    public BaseResponse<Boolean> createGroup(String groupName, HttpServletRequest request) {
+    public BaseResponse<Boolean> createGroup(@RequestBody CreateGroupRequest createGroupRequest, HttpServletRequest request) {
         UserDTO loginUser = (UserDTO) request.getSession().getAttribute("user_login_state");
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
-        Boolean group = groupService.createGroup(loginUser.getId(), groupName);
+        if (BeanUtil.hasNullField(createGroupRequest)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Boolean group = groupService.createGroup(loginUser.getId(), createGroupRequest.getGroupName());
         if (Boolean.FALSE.equals(group)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "创建群聊失败");
         }
         return ResultUtils.success(true, "创建群聊成功");
+    }
+
+    /**
+     * 列出所有群聊
+     * @return 群聊列表
+     */
+    @GetMapping("/listAll")
+    public BaseResponse<List<Group>> listAllGroup() {
+        List<Group> list = groupService.list();
+        return ResultUtils.success(list);
     }
 }
